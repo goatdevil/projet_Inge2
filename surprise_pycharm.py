@@ -5,6 +5,8 @@ from surprise import Reader
 from surprise import Dataset
 from surprise import SVD
 from surprise import SVDpp
+from surprise import NMF
+from surprise.model_selection.search import GridSearchCV
 
 from surprise.model_selection import cross_validate
 import random
@@ -38,11 +40,26 @@ for hotel in liste_hotel:
 data=Dataset.load_from_df(df[["User_id","Hotel_id","Sentiment"]],reader)
 svd = SVD(verbose=True, n_epochs=10)
 cross_validate(svd, data, measures=['RMSE', 'MAE'], cv=9, verbose=True)
-svdp=SVDpp(verbose=True, n_epochs=5)
-cross_validate(svdp, data, measures=['RMSE', 'MAE'], cv=9, verbose=True) # calcul RMSE et MAE pour les modeles SVD et SVD++
+nmf = NMF(verbose=True, n_epochs=10)
+cross_validate(nmf, data, measures=['RMSE', 'MAE'], cv=9, verbose=True)
+svdpp=SVDpp(verbose=True, n_epochs=10)
+cross_validate(svdpp, data, measures=['RMSE', 'MAE'], cv=9, verbose=True) # calcul RMSE et MAE pour les modeles SVD et SVD++
 
 trainset=data.build_full_trainset() #création du dataset de training
-svdp.fit(trainset)# choix de SVD++ car RMSE et MAE moyen plus faible
+
+grid={'n_epochs': [8,9,10,11,12,13,14,15, 20],
+        'lr_all': [.0025, .005,.0075, .001,.005, .01]}
+
+gs = GridSearchCV(SVDpp, grid,measures=['RMSE','MAE'], cv=9)
+gs.fit(data)
+param=gs.best_params['rmse']
+svdpp=SVDpp(verbose=True, n_epochs=param['n_epochs'],lr_all=param['lr_all'])
+
+
+svdpp.fit(trainset)# choix de SVD++ car RMSE et MAE moyen plus faible
+
+
+
 len_hotelid=max(df["Hotel_id"])
 len_userid=max(df["User_id"])
 
@@ -57,19 +74,19 @@ def predict_review(user_id, hotel_id, model):
 def generate_recommendation(nom_user, model, metadata, thresh=0.45):#generation des recommendation avec sauvegarde si score predi>0,45
     user_id=dico_user[nom_user]
     recommended_hotel=[]
-    book_ids = list(metadata['Hotel_id'].values)
+    hotel_ids = list(metadata['Hotel_id'].values)
     hotel_comm=df[df["User_id"]==user_id][["Hotel_id"]]
     hotel_comm=list(hotel_comm["Hotel_id"].values)
-    random.shuffle(book_ids)
+    random.shuffle(hotel_ids)
 
-    for book_id in book_ids:
-        rating = predict_review(user_id, book_id, model, metadata) # prédit une note de commentaire théorique
+    for hotel_id in hotel_ids:
+        rating = predict_review(user_id, hotel_id, model) # prédit une note de commentaire théorique
         if rating >= thresh: #si score >0,45 on sauvegarde l'id de l'hotel
-            recommended_hotel.append(book_id)
+            recommended_hotel.append(hotel_id)
 
     return hotel_comm,set(recommended_hotel)
 
-hotel_comm,hotel_reco=generate_recommendation(" James R",svdp,df)
+hotel_comm,hotel_reco=generate_recommendation(" James R",svdpp,df)
 nom_hotel_comm=[]
 for indice in hotel_comm: #On utilise le dictionnaire id_hotel=> nom_hotel pour afficher le nom des hotels ou la personne à laisser un commentaire
     nom_hotel_comm.append(dico_hotel[indice])
