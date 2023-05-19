@@ -51,7 +51,7 @@ def refit(df,new_df,model):
     new_data = Dataset.load_from_df(df[["User_id", "Hotel_id", "Sentiment"]], reader)
     new_trainset = new_data.build_full_trainset()
     model.fit(new_trainset)
-    return model
+    return model,df
 
 
 def predict_review(user_id, hotel_id, model):
