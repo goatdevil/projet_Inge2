@@ -61,7 +61,7 @@ def predict_review(user_id, hotel_id, model):
 
 
 def generate_recommendation(nom_user, model, metadata, thresh=0.45):#generation des recommendation avec sauvegarde si score predi>0,45
-    user_id=dico_user[nom_user]
+    user_id=dico_user_id[nom_user]
     recommended_hotel=[]
     hotel_ids = list(metadata['Hotel_id'].values)
     hotel_comm=df[df["User_id"]==user_id][["Hotel_id"]]
