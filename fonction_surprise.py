@@ -100,16 +100,22 @@ def ajout_new_comm(newdf,nom_user, nom_hotel,comm,df_text=df3):
     return newdf,df_text
 
 
-def find_comm(nom_user):
-    id_user = dico_user_id[nom_user]
+def find_comm(nom_user,df=df3):
+
     tab_comm = []
-    with open('df_commentaire_sans_caracteres_speciaux.csv', 'r', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        header = next(reader)
-        row = reader[id_user]
-        for comm in row:
-            if comm != "":
-                tab_comm.append(comm)
+    collone=df[nom_user].values
+    for x in range(len(liste_hotel)):
+        comm=str(collone[x])
+        if comm!="nan":
+            tab_comm.append(comm)
+
+    # with open('df_commentaire_sans_caracteres_speciaux.csv', 'r', encoding='utf-8') as csvfile:
+    #     reader = csv.reader(csvfile)
+    #     header = next(reader)
+    #     row = reader[id_user]
+    #     for comm in row:
+    #         if comm != "":
+    #             tab_comm.append(comm)
     return tab_comm
 
-
+print(find_comm(" Danny S"))
